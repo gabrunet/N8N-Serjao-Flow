@@ -1,0 +1,1802 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8ca54eae-15d1-49d3-af33-7a6e5d17b833",
+              "leftValue": "={{ $json.tipo }}",
+              "rightValue": "incoming",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "82912d66-ee4b-439c-9d55-96090bc6ba62",
+              "leftValue": "={{ $json.etiquetas }}",
+              "rightValue": "agente-off",
+              "operator": {
+                "type": "array",
+                "operation": "notContains",
+                "rightType": "any"
+              }
+            },
+            {
+              "id": "01378b71-cad4-492c-a10b-6419a443f316",
+              "leftValue": "={{ $json.etiquetas }}",
+              "rightValue": "teste",
+              "operator": {
+                "type": "array",
+                "operation": "notContains",
+                "rightType": "any"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        10960,
+        5840
+      ],
+      "id": "eb412af2-b3b8-454e-84a7-5aa2e5aeedb8",
+      "name": "Mensagem chegando?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ultima_mensagem_da_fila = $input.last()\nconst mensagem_do_workflow = $('Info').first()\n\nif (ultima_mensagem_da_fila.json.id_mensagem !== mensagem_do_workflow.json.id_mensagem) {\n  // Mensagem encavalada, para o workflow\n  return [];\n}\n\n// Pass-through da fila de mensagens\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        12544,
+        5824
+      ],
+      "id": "1a4358ec-8dc5-443d-8b34-ecc006ae1472",
+      "name": "Mensagem encavalada?"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "n8n_fila_mensagens",
+          "mode": "list"
+        },
+        "returnAll": true,
+        "where": {
+          "values": [
+            {
+              "column": "telefone",
+              "value": "={{ $('Info').item.json.telefone }}"
+            }
+          ]
+        },
+        "sort": {
+          "values": [
+            {
+              "column": "timestamp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        12384,
+        5824
+      ],
+      "id": "877bd23d-6621-4e88-8dac-781f52c2bd56",
+      "name": "Buscar mensagens",
+      "retryOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "u2DcdvjpKTsHH4Gg",
+          "name": "Supabase Soberano Barbearia"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "n8n_fila_mensagens",
+          "mode": "list"
+        },
+        "deleteCommand": "delete",
+        "where": {
+          "values": [
+            {
+              "column": "telefone",
+              "value": "={{ $json.telefone }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        12720,
+        5824
+      ],
+      "id": "3052f1c9-6048-41b3-ac24-0da93425f373",
+      "name": "Limpar fila de mensagens",
+      "retryOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "u2DcdvjpKTsHH4Gg",
+          "name": "Supabase Soberano Barbearia"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Processando mensagens encavaladas\n\nEssa etapa trata a situação em que o usuário envia múltiplas mensagens seguidas. O ponto negativo é o aumento no tempo de resposta do agente. Lógica dispensa uso de soluções mais complexas, como RabbitMQ.\n\nTempo de espera recomendado de ~16s. Quando estiver testando, recomendamos reduzir um pouco para ficar mais rápido de testar.\n",
+        "height": 540,
+        "width": 856,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        12032,
+        5616
+      ],
+      "id": "3b672d82-52ff-46b9-9cb0-cc80b1c9aac6",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "amount": 16
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        12240,
+        5824
+      ],
+      "id": "93461442-9e94-4b4d-b4cf-b33bdb0eeec9",
+      "name": "Esperar",
+      "webhookId": "fe87dba1-957a-4e7a-b60d-66d10208b42c"
+    },
+    {
+      "parameters": {
+        "content": "# Enviando resposta",
+        "height": 540,
+        "width": 768,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        15504,
+        5616
+      ],
+      "id": "972ca4d1-a93e-44c4-a6db-d01ec34c099f",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "# Tratando input\n",
+        "height": 540,
+        "width": 1396
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        10608,
+        5616
+      ],
+      "id": "7da7b389-a8b5-45af-af98-17b6684fea87",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Info').item.json.mensagem }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    },
+                    "id": "1382cd26-d96e-4c55-99dd-2ca305ffe82e"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Texto"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b9a7e16f-b6e4-45d7-846d-92dcb3117593",
+                    "leftValue": "={{ $('Info').item.json.mensagem_de_audio }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Áudio"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        11136,
+        5840
+      ],
+      "id": "d8efd994-4008-4e85-b926-8504b0895c9f",
+      "name": "Tipo de mensagem"
+    },
+    {
+      "parameters": {
+        "content": "# Marcar como lida e \"digitando...\"",
+        "height": 540,
+        "width": 660,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        12912,
+        5616
+      ],
+      "id": "0dcfa325-6fa3-4456-a5e3-29cb1a360617",
+      "name": "Sticky Note12"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "n8n_fila_mensagens",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "telefone": "={{ $('Info').item.json.telefone }}",
+            "mensagem": "={{ $('Info').item.json.mensagem || $('Transcrever audio').item.json.text }}",
+            "timestamp": "={{ $('Info').item.json.timestamp.toDateTime() }}",
+            "id_mensagem": "={{ $('Info').item.json.id_mensagem }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "id_mensagem",
+              "displayName": "id_mensagem",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        12080,
+        5824
+      ],
+      "id": "1ae37ef2-ae63-4026-aca4-708b0113fa4a",
+      "name": "Enfileirar mensagem.",
+      "retryOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "u2DcdvjpKTsHH4Gg",
+          "name": "Supabase Soberano Barbearia"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Info').item.json.url_chatwoot }}/api/v1/accounts/{{ $('Info').item.json.id_conta }}/conversations/{{ $('Info').item.json.id_conversa }}/update_last_seen",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        12960,
+        5824
+      ],
+      "id": "ded851e3-756e-48b1-9a70-58fa329311fd",
+      "name": "Marcar como lidas",
+      "credentials": {
+        "chatwootApi": {
+          "id": "suuswiNutlmFINTO",
+          "name": "ChatWoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7eab8669-6929-4dc6-b3e2-943065bc306c",
+              "name": "mensagem",
+              "value": "={{ $('Info').item.json.mensagem ? $('Mensagem encavalada?').all().map(info => info.json.mensagem).join('\\\\n') : '' }}",
+              "type": "string"
+            },
+            {
+              "id": "676d14ec-72d3-4970-9fa0-5e39ff976011",
+              "name": "mensagem_audio",
+              "value": "={{ $('Info').item.json.mensagem_de_audio ? $('Mensagem encavalada?').all().map(info => info.json.mensagem).join('\\\\n') : '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        13104,
+        5824
+      ],
+      "id": "2fc5d28c-60d8-41e1-a4ad-de72936c8ae7",
+      "name": "Set mensagens",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Mensagem recebida').item.json.body.attachments[0].data_url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        11296,
+        5952
+      ],
+      "id": "74a8c998-68cc-4530-8c2d-283b9d297fc6",
+      "name": "Download áudio",
+      "credentials": {
+        "chatwootApi": {
+          "id": "suuswiNutlmFINTO",
+          "name": "ChatWoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {
+          "language": "pt"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        11872,
+        5952
+      ],
+      "id": "b34c1089-053b-49aa-857d-114c72ef5198",
+      "name": "Transcrever audio",
+      "credentials": {
+        "openAiApi": {
+          "id": "wT6jwyxSRg4tSLx5",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        11440,
+        5952
+      ],
+      "id": "3692ffd1-3fea-4782-abc3-6f9d7568d216",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        11584,
+        5952
+      ],
+      "id": "2167576e-2e42-4e20-a0f0-3aa9f2d9a5f4",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Info').item.json.url_chatwoot }}/api/v1/accounts/{{ $('Info').item.json.id_conta }}/conversations/{{ $('Info').item.json.id_conversa }}/toggle_typing_status",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "typing_status",
+              "value": "off"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        15744,
+        5792
+      ],
+      "id": "99f21d10-8211-4106-a66b-75e821726896",
+      "name": "Resetar status",
+      "credentials": {
+        "chatwootApi": {
+          "id": "suuswiNutlmFINTO",
+          "name": "ChatWoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Info').item.json.url_chatwoot }}/api/v1/accounts/{{ $('Info').item.json.id_conta }}/conversations/{{ $('Info').item.json.id_conversa }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{ $('Formatar Texto').item.json.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16048,
+        5792
+      ],
+      "id": "fa7e2eb5-1f74-4668-9fd3-f7a0389edd46",
+      "name": "Enviar texto.",
+      "credentials": {
+        "chatwootApi": {
+          "id": "suuswiNutlmFINTO",
+          "name": "ChatWoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c8fd010d-6096-4a50-b3e2-e9fe26661840",
+              "name": "id_mensagem",
+              "value": "={{ $json.body.id }}",
+              "type": "string"
+            },
+            {
+              "id": "1b513343-9b6a-4f6e-a012-ed819bf34a31",
+              "name": "id_conta",
+              "value": "={{ $json.body.account.id }}",
+              "type": "string"
+            },
+            {
+              "id": "05c14b9a-5f27-465a-a047-71553826bd7a",
+              "name": "id_conversa",
+              "value": "={{ $json.body.conversation.id }}",
+              "type": "string"
+            },
+            {
+              "id": "8bf522a6-75fb-434a-854c-b736539309e1",
+              "name": "telefone",
+              "value": "={{ $json.body.sender.phone_number }}",
+              "type": "string"
+            },
+            {
+              "id": "0d622a33-f313-4758-a764-fa6cbf2b0587",
+              "name": "mensagem",
+              "value": "={{ $json.body.content || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "8f4b9d84-56e0-4f45-9f17-68c53f365f43",
+              "name": "mensagem_de_audio",
+              "value": "={{ $json.body.attachments?.[0]?.meta?.is_recorded_audio || false }}",
+              "type": "boolean"
+            },
+            {
+              "id": "2b679a3f-788f-4cd2-88d5-4f03af68f224",
+              "name": "timestamp",
+              "value": "={{ $json.body.created_at }}",
+              "type": "string"
+            },
+            {
+              "id": "24caf88e-74ce-43ab-8dc4-1fff471b706f",
+              "name": "tipo",
+              "value": "={{ $json.body.message_type }}",
+              "type": "string"
+            },
+            {
+              "id": "573669d2-1e43-4010-8c82-a67459ffe1db",
+              "name": "etiquetas",
+              "value": "={{ $json.body.conversation.labels }}",
+              "type": "array"
+            },
+            {
+              "id": "40ff895f-f63f-4e4f-bba3-c7d803c277f1",
+              "name": "url_chatwoot",
+              "value": "https://chatwoot.altion.com.br",
+              "type": "string"
+            },
+            {
+              "id": "cf71dea1-d585-4235-8f05-29bc5f82b5df",
+              "name": "telegram_chat_id",
+              "value": "<colar seu telegram chat id>",
+              "type": "string"
+            },
+            {
+              "id": "f8ec3fd7-f622-4c4c-887a-c374c29a094c",
+              "name": "waiting_since",
+              "value": "={{ $json.body.conversation.waiting_since }}",
+              "type": "string"
+            },
+            {
+              "id": "5d973cf4-c771-47bb-b64d-906cbf689d54",
+              "name": "isBarber",
+              "value": "={{ $json.body.conversation.labels.includes('barbeiro') }}",
+              "type": "boolean"
+            },
+            {
+              "id": "2b2ba31c-701b-44cd-9d86-210e55af4d4a",
+              "name": "nomeRemetente",
+              "value": "={{ $json.body.sender.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        10816,
+        5840
+      ],
+      "id": "7d667452-05ff-4a29-aaf9-81743515905f",
+      "name": "Info"
+    },
+    {
+      "parameters": {
+        "content": "## ATENÇÃO AO TRANSFERIR PARA PRD \n1- Aqui os emails das agendas estão alterados",
+        "width": 288
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        14064,
+        5632
+      ],
+      "typeVersion": 1,
+      "id": "2c24c8fd-6db1-4da7-a3d0-7966486babd0",
+      "name": "Sticky Note35"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all()\nconst results = [];\n\nfor (const item of items) {\n    const mensagem = (item.json.mensagem || item.json.mensagem_audio || '').replace(/\\\\n/g, '\\n')                                            \n      .toLowerCase()                                                    \n      .trim();   \n\n    // Define reaction based on message content\n    let reaction = null;\n    let clear_memory = false;\n\n    // Detect greetings - clear memory for fresh session\n    const isGreeting = /^(oi|olá|ola|bom dia|boa tarde|boa noite|hey|hello|e ai|eai|tudo bem|tudo bom|opa)(\\s|\\?|!|,|$)/i.test(mensagem);\n\n    if (isGreeting) {\n      reaction = '🤝';\n      clear_memory = true;\n    } else if (mensagem.match(/(obrigado|valeu|thanks|brigado)/i)) {\n      reaction = '🫡';\n    } else if (mensagem.match(/(consultar|verificar|buscar|checar)/i)) {\n      reaction = '👀';\n    }\n\n    results.push({\n      json: {\n        ...item.json,\n        auto_reaction: reaction,\n        clear_memory: clear_memory\n      }\n    });\n  }\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        13248,
+        5824
+      ],
+      "id": "32156264-7e50-4127-b3bb-9efa22573c00",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Info').item.json.url_chatwoot }}/api/v1/accounts/{{ $('Info').item.json.id_conta }}/conversations/{{ $('Info').item.json.id_conversa }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"content\": \"{{ $json.auto_reaction }}\",\n    \"content_attributes\": {\n      \"in_reply_to\": {{ $('Info').item.json.id_mensagem }},\n      \"is_reaction\": true\n    }\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        13392,
+        5824
+      ],
+      "id": "8ef2236a-16a2-4715-a4db-a8e4a4b0d2fd",
+      "name": "HTTP Request",
+      "credentials": {
+        "chatwootApi": {
+          "id": "suuswiNutlmFINTO",
+          "name": "ChatWoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Info').item.json.url_chatwoot }}/api/v1/accounts/{{ $('Info').item.json.id_conta }}/conversations/{{ $('Info').item.json.id_conversa }}/toggle_typing_status",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "typing_status",
+              "value": "={{ $('Info').item.json.mensagem_de_audio ? 'recording' : 'on' }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        15888,
+        5792
+      ],
+      "id": "4b17935e-1eb4-415a-a1f0-37abe6b0cd7a",
+      "name": "Digitando/Gravando...1",
+      "credentials": {
+        "chatwootApi": {
+          "id": "suuswiNutlmFINTO",
+          "name": "ChatWoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Info').item.json.url_chatwoot }}/api/v1/accounts/{{ $('Info').item.json.id_conta }}/conversations/{{ $('Info').item.json.id_conversa }}/toggle_typing_status",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "typing_status",
+              "value": "={{ $('Info').item.json.mensagem_de_audio ? 'recording' : 'on' }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        15184,
+        5872
+      ],
+      "id": "5f2f3f84-8f18-4f71-be86-e3ee4509bb67",
+      "name": "Digitando/Gravando...2",
+      "credentials": {
+        "chatwootApi": {
+          "id": "suuswiNutlmFINTO",
+          "name": "ChatWoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f2e5acc1-1e09-4c94-b025-71932ac7f69b",
+              "leftValue": "={{ $('Secretária').item.json.output}}",
+              "rightValue": "=0",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        15360,
+        5872
+      ],
+      "id": "a86f0428-a6a4-4b19-8ea5-be0f1b91c796",
+      "name": "Validar Mensagem Gemini"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Info').item.json.url_chatwoot }}/api/v1/accounts/{{ $('Info').item.json.id_conta }}/conversations/{{ $('Info').item.json.id_conversa }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "=Desculpe, poderia repetir sua solicitação ?"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        15584,
+        5968
+      ],
+      "id": "6a017d70-7fa2-4437-9a4b-46359c3e9bb4",
+      "name": "Enviar Fallback",
+      "credentials": {
+        "chatwootApi": {
+          "id": "suuswiNutlmFINTO",
+          "name": "ChatWoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let text = $('Secretária').first().json.output || '';\n\n// Remove marcador interno\ntext = text.replace(/\\[FORA_DE_ESCOPO\\]\\s*/g, '').trim();\n\nconst shortReplies = ['ok', 'blz', 'bl', 'beleza', 'vlw', 'flw', 'ta'];\n\nif (!text || (text.trim().length < 5 && !shortReplies.includes(text.trim().toLowerCase()))) {\n    return [{ json: { text: 'Desculpe, poderia repetir sua solicitação?' } }];\n}\n\n// ** para * (negrito WhatsApp)\ntext = text.replace(/\\*\\*/g, '*');\n\n// Remove headers markdown\ntext = text.replace(/^#+\\s*/gm, '');\n\n// Substitui nome completo por primeiro nome nas saudações\ntext = text.replace(/^(Olá|Oi|E aí|Opa),?\\s+([A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][\\wÀ-ÿ]+)(?:\\s+[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][\\wÀ-ÿ]+)+/m, '$1, $2');\n\n// Quebra linha antes de intros de lista\ntext = text.replace(/\\.\\s+(Me manda|Manda|Segue|Nossos|Veja|Confira|Os serviços|Os horários)/g, '.\\n\\n$1');\n\n// Quebra linha antes de bullet points\ntext = text.replace(/\\s+([•\\-\\*]\\s)/g, '\\n$1');\n\n// Quebra linha antes de frases de encerramento\ntext = text.replace(/\\.\\s+(Se quiser|Caso queira|Pode mandar|Qualquer dúvida|Estou às ordens|Estamos à disposição)/g, '.\\n\\n$1');\n\n// Quebra linha antes de emoji SOMENTE se ele estiver no início de uma \"palavra\" após espaço\n// (evita quebrar quando emoji está colado no fim de uma frase como \"confirmado!✅\")\ntext = text.replace(/(?<=\\w)\\s+([\\u{1F300}-\\u{1FAFF}\\u{2600}-\\u{27BF}])/gu, '\\n$1');\n\n// Quebra após ponto final (exceto abreviações)\ntext = text.replace(/(?<!Prof|Dr|Dra|Sr|Sra|R|Av|Tel|Cel|Pç|CEP)\\.\\s+(?=[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ])/g, '.\\n\\n');\n\n// Limpa 3+ quebras de linha\ntext = text.replace(/\\n{3,}/g, '\\n\\n');\n\n// Aviso de pontualidade em confirmações\nif (text.includes('confirmado') && !text.includes('Tente chegar')) {\n    text = text.trimEnd() + '\\n\\nTente chegar 10 minutos antes.';\n}\n\nreturn [{ json: { text } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        15584,
+        5792
+      ],
+      "id": "b278542d-251a-4415-828e-8a18d1da6d22",
+      "name": "Formatar Texto"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "76ad9148-f0a5-4b59-9f99-e266ba5b480c",
+              "leftValue": "={{ $('Secretária').item.json.output}}",
+              "rightValue": "[FORA_DE_ESCOPO]",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        14448,
+        5824
+      ],
+      "id": "13b6cacd-6855-4d4f-b473-db91825d4826",
+      "name": "Detectar [FORA DO ESCOPO]"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO n8n_off_topic_counter (phone_number, count, updated_at)\n  VALUES ('{{ $('Info').item.json.telefone }}', 1, NOW())\n  ON CONFLICT (phone_number)\n  DO UPDATE SET\n    count = n8n_off_topic_counter.count + 1,\n    updated_at = NOW()\n  RETURNING count;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        14656,
+        5696
+      ],
+      "id": "8a4d259d-f2bc-4f9a-a1ec-3dd240eacf8a",
+      "name": "Incrementa Contagem para Agente-OFF",
+      "retryOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "u2DcdvjpKTsHH4Gg",
+          "name": "Supabase Soberano Barbearia"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ebe44bb2-f49e-4792-a26b-79624a2555c5",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        14848,
+        5824
+      ],
+      "id": "7b8668e3-7c59-4375-a1e6-0273c67cf744",
+      "name": "Verifica se deve botar agente-off"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO n8n_off_topic_counter (phone_number, count, updated_at)\n  VALUES ('{{ $('Info').item.json.telefone }}', 0, NOW())\n  ON CONFLICT (phone_number)\n  DO UPDATE SET count = 0, updated_at = NOW();",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        14848,
+        5984
+      ],
+      "id": "386abbda-32f1-449f-8b98-2b77338f0765",
+      "name": "Reseta Contador de Agente-OFF",
+      "retryOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "u2DcdvjpKTsHH4Gg",
+          "name": "Supabase Soberano Barbearia"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const isBarber = $('Info').first().json.isBarber === true;\n  const barberBlock = isBarber ? `\n  ## ⚠️ MODO BARBEIRO ATIVO\n  Você está sendo acionado por um BARBEIRO da barbearia, não por um cliente.\n  O barbeiro pode gerenciar agendamentos de qualquer cliente sem restrições.\n  IDENTIDADE:\n  - NÃO use o cumprimento inicial (\"Buenas!...\")\n  - NÃO peça nome e sobrenome do barbeiro — ele JÁ É o barbeiro\n  - Tom direto e objetivo, sem enrolação\n  LOCALIZAR AGENDAMENTO POR NOME DO CLIENTE:\n  1. O barbeiro informa o nome do cliente (ex: \"Caio Moreira\")\n  2. Busque HOJE primeiro: chame \"Buscar_todos_os_eventos\" na data de hoje, na agenda do barbeiro relevante\n  3. Procure o evento cujo TÍTULO contenha o nome informado\n  4. Se não encontrar hoje, diga: \"Não encontrei agendamento de [NOME] hoje. Qual é a data?\"\n  5. NUNCA identifique o evento pelo telefone — use o título (nome do cliente)\n  CRIAR AGENDAMENTO (modo barbeiro):\n  - O barbeiro informa: nome do cliente, serviço, data, horário e barbeiro (se não for o próprio)\n  - Pergunte também: \"Tem telefone do cliente para adicionar no agendamento?\" (opcional)\n  - Se o telefone for informado, adicione-o na descrição do evento no formato: \"Telefone: [NÚMERO]\"\n  - Se não for informado, crie o evento normalmente sem descrição de telefone\n  - Verifique disponibilidade normalmente com \"Buscar_todos_os_eventos\"\n  - TÍTULO DO EVENTO: use o formato \"[NOME DO CLIENTE]\" (ex: \"Caio Moreira\")\n  - Se o barbeiro não informar o nome, pergunte: \"Qual o nome do cliente pro agendamento?\"\n  - NÃO peça confirmação do nome — o barbeiro já sabe\n  CANCELAR (modo barbeiro):\n  - TURNO 1: \"Buscar_todos_os_eventos\" na agenda e data informadas → localize pelo título (nome do cliente)\n  - TURNO 2: \"Deletar_evento\" com o event ID\n  - TURNO 3: \"Enviar_alerta_de_cancelamento\"\n  - TURNO 4: Confirme o cancelamento ao barbeiro\n  REMARCAR (modo barbeiro):\n  - Localize o evento pelo nome do cliente\n  - Verifique disponibilidade do novo horário com \"Buscar_todos_os_eventos\"\n  - Use \"Atualizar_evento\" se o horário estiver livre\n  - Confirme ao barbeiro\n  TODAS AS OUTRAS REGRAS continuam valendo normalmente.\n  ` : '';\n  return [{ json: { barberBlock } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        13712,
+        5824
+      ],
+      "id": "c84a2d16-fa67-4755-b069-b2c0a1b47b54",
+      "name": "Barber Block"
+    },
+    {
+      "parameters": {
+        "content": "# Agente Principal",
+        "height": 540,
+        "width": 772,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        13600,
+        5616
+      ],
+      "id": "59be93c7-6a05-4fc5-b76b-08b57858745f",
+      "name": "Sticky Note14"
+    },
+    {
+      "parameters": {
+        "content": "# Tratamentos necessários",
+        "height": 540,
+        "width": 1072,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        14400,
+        5616
+      ],
+      "id": "368cc845-6b5a-4018-b0a4-6464f9d62e8d",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "VCLEiunUpP61IhxeXa0-A",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/VCLEiunUpP61IhxeXa0-A",
+          "cachedResultName": "Escalar Humano"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "telefone": "={{ $('Info').item.json.telefone }}",
+            "ultima_mensagem": "={{ $('Set mensagens').item.json.mensagem || $('Set mensagens').item.json.mensagem_audio }}",
+            "id_conta": "={{ $('Info').item.json.id_conta }}",
+            "id_conversa": "={{ $('Info').item.json.id_conversa }}",
+            "telegram_chat_id": "={{ $('Info').item.json.telegram_chat_id }}",
+            "url_chatwoot": "={{ $('Info').item.json.url_chatwoot }}",
+            "nome": "={{ $('Mensagem recebida').item.json.body.conversation.messages[0].sender.name }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "ultima_mensagem",
+              "displayName": "ultima_mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "id_conta",
+              "displayName": "id_conta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "id_conversa",
+              "displayName": "id_conversa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "telegram_chat_id",
+              "displayName": "telegram_chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "url_chatwoot",
+              "displayName": "url_chatwoot",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        15040,
+        5664
+      ],
+      "id": "0ccc23b3-256b-417c-a655-f4e10d6dffe2",
+      "name": "Call 'Escalar Humano'"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "00000000-0000-0000-0000-000000000000",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        10656,
+        5840
+      ],
+      "id": "4fdbefc8-98cd-4b3c-b734-fe7c36fbb503",
+      "name": "Mensagem recebida",
+      "webhookId": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        13776,
+        6016
+      ],
+      "id": "00326c9c-2a69-40f6-8c54-eb4a1fc904aa",
+      "name": "Gemini",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zReKTLoXQ4WXz6z8",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Info').item.json.telefone }}",
+        "tableName": "n8n_historico_mensagens",
+        "contextWindowLength": 25
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        13904,
+        6016
+      ],
+      "id": "bf5e12f1-4bbe-4de6-ac56-53558eac283b",
+      "name": "Memory",
+      "retryOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "hDWLZfjCgZL2Aamo",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Use a ferramenta para refletir sobre algo. Ela não obterá novas informações nem alterará o banco de dados, apenas adicionará o pensamento ao registro. Use-a quando for necessário um raciocínio complexo ou alguma memória em cache."
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        14144,
+        6016
+      ],
+      "id": "f3e66d71-8b79-4510-95eb-78acc7cbf7bb",
+      "name": "Refletir"
+    },
+    {
+      "parameters": {
+        "description": "Chame essa ferramenta UMA ÚNICA VEZ para direcionar o atendimento para o gestor responsável.\n  Após chamar esta ferramenta, considere a tarefa concluída e responda ao paciente.\n  NÃO chame esta ferramenta mais de uma vez.",
+        "workflowId": {
+          "__rl": true,
+          "value": "SzNmgDYGQR9rfZET",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/SzNmgDYGQR9rfZET",
+          "cachedResultName": "Escalar Humano DEV"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "telefone": "={{ $('Info').item.json.telefone }}",
+            "nome": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('nome', ``, 'string') }}",
+            "ultima_mensagem": "={{ $('Set mensagens').item.json.mensagem || $('Set mensagens').item.json.mensagem_audio }}",
+            "id_conta": "={{ $('Info').item.json.id_conta }}",
+            "id_conversa": "={{ $('Info').item.json.id_conversa }}",
+            "telegram_chat_id": "={{ $('Info').item.json.telegram_chat_id }}",
+            "url_chatwoot": "={{ $('Info').item.json.url_chatwoot }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "ultima_mensagem",
+              "displayName": "ultima_mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "id_conta",
+              "displayName": "id_conta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "id_conversa",
+              "displayName": "id_conversa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "telegram_chat_id",
+              "displayName": "telegram_chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "url_chatwoot",
+              "displayName": "url_chatwoot",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        14256,
+        6016
+      ],
+      "id": "58ec0168-7b64-4afc-8212-99708504f3df",
+      "name": "Escalar humano"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Set mensagens').item.json.mensagem || $('Set mensagens').item.json.mensagem_audio }}",
+        "options": {
+          "systemMessage": "=HOJE É: {{ $now.setZone('America/Campo_Grande').setLocale('pt-BR').toFormat(\"cccc, dd 'de' LLLL 'de' yyyy\") }}\nTELEFONE DO CONTATO: {{ $('Info').item.json.telefone }}\nID DA CONVERSA: {{ $('Info').item.json.id_conversa }}\n\n{{ $('Barber Block').item.json.barberBlock }}\n\nMAPA DE DATAS (próximos 14 dias):\n{{ Array.from({length: 14}, (_, i) => { const d = $now.setZone('America/Campo_Grande').plus({days: i}).setLocale('pt-BR'); const label = i === 0 ? ' (HOJE)' : i === 1 ? ' (AMANHÃ)' : ''; return `- ${d.toFormat('cccc')} ${d.toFormat('dd/MM/yyyy')} → ${d.toFormat('yyyy-MM-dd')}${label}`; }).join('\\n') }}\n\n⚠️ REGRA ABSOLUTA DE DATAS: Toda referência de data do cliente (\"amanhã\", \"terça\", \"semana que vem\", \"dia 15\", etc.) DEVE ser convertida consultando a tabela acima — NUNCA por cálculo próprio. Modelos de linguagem erram ao calcular dias da semana. A tabela é a única fonte verdadeira. Antes de usar qualquer data YYYY-MM-DD, localize o nome do dia na coluna esquerda da tabela e copie o valor da coluna direita.\n\n⚠️ A regra vale nos DOIS SENTIDOS:\n\n(1) Cliente → data: toda referência do cliente (\"amanhã\", \"terça\") vira \n    YYYY-MM-DD consultando a tabela.\n\n(2) Data → cliente: toda data YYYY-MM-DD retornada por uma ferramenta \n    (get_next_available_date, get_available_slots, get_my_appointments, etc.) \n    DEVE ser apresentada ao cliente com o dia da semana COPIADO da tabela. \n    Localize o YYYY-MM-DD na coluna da direita e copie o nome do dia da \n    coluna da esquerda. NUNCA deduza o dia da semana por conta própria. \n    Se a data não estiver na tabela, mencione só a data numérica, sem dia \n    da semana.\n\n❌ ERRADO: tool retornou 2026-06-10 → responder \"terça, dia 10\" (dia calculado de cabeça)\n✅ CERTO: tool retornou 2026-06-10 → localizar \"2026-06-10\" no mapa → mapa diz \"quarta-feira 10/06/2026\" → responder \"quarta, dia 10\"\n\n-----------------------\n\n## 🚨 REGRA Nº 1 — AÇÃO EXIGE TOOL CALL REAL (leia antes de qualquer coisa)\n\nVerbos de ação que SEMPRE exigem chamada de ferramenta real:\n**travar, bloquear, fechar agenda, agendar, marcar, cancelar, remarcar, desbloquear, liberar, editar bloqueio**\n\nQuando alguém pedir uma dessas ações, a ordem é OBRIGATÓRIA e INVIOLÁVEL:\n\n  (1) CHAME a ferramenta correspondente\n  (2) AGUARDE o retorno\n  (3) SÓ ENTÃO confirme com base no que a ferramenta devolveu\n\nNUNCA escreva \"Prontinho\", \"Feito\", \"Travei\", \"Bloqueei\", \"Agendei\", \"Cancelei\", \"Remarcei\" ou qualquer variação SEM ter chamado a ferramenta e recebido resposta de sucesso. O histórico da conversa e a memória podem ter dezenas de exemplos desse padrão — **IGNORE-OS como modelo de resposta**. Cada ação nova exige uma chamada de ferramenta nova. Confirmar sem chamar a tool é **alucinação** e causa prejuízo real (barbeiro perde cliente porque o horário não foi travado de verdade).\n\n❌ ERRADO (alucinação): responder com texto de confirmação (\"Prontinho\", \"Travei\", \"Bloqueei\", etc.) SEM ter chamado `book_barber_absence` nesta resposta.\n\n✅ CERTO: chamar `list_barbers` → chamar `book_barber_absence` com os parâmetros do que o barbeiro pediu (horário, data, motivo) → SÓ APÓS retorno de sucesso responder com confirmação curta refletindo exatamente o que foi bloqueado.\n\n⚠️ Os horários, datas e nomes nas confirmações devem vir SEMPRE do pedido atual do barbeiro — nunca de exemplos do prompt nem de execuções passadas na memória.\n\nSe você está prestes a escrever uma confirmação de ação, PARE e pergunte a si mesmo: \"eu chamei a ferramenta nessa resposta? recebi retorno de sucesso?\". Se a resposta for não → chame a ferramenta primeiro.\n\n## 🚨 REGRA Nº 2 — barberId e serviceId EXPIRAM A CADA RESPOSTA\n\n`barberId` e `serviceId` SÓ são válidos se vieram de uma chamada de \n**list_barbers** / **list_services** feita NESTA MESMA RESPOSTA.\n\n- IDs que aparecem no histórico da conversa, na memória ou em execuções \n  anteriores são INVÁLIDOS. Considere-os expirados.\n- Antes de chamar QUALQUER ferramenta que receba `barberId` \n  (get_next_available_date, get_available_slots, create_booking, \n  reschedule_booking, get_barber_appointments, book_barber_absence, etc.), \n  chame **list_barbers** PRIMEIRO, nesta resposta, sem exceção — mesmo que \n  pareça redundante, mesmo que você \"já saiba\" o ID.\n- O mesmo vale para `serviceId` e **list_services** antes de create_booking.\n- Sequência mínima obrigatória para consultar disponibilidade:\n  (1) list_barbers → (2) get_next_available_date ou get_available_slots\n  Chamar o passo 2 sem o passo 1 na mesma resposta é ERRO.\n\nSe você está prestes a passar um barberId pra uma ferramenta, pergunte a si \nmesmo: \"esse ID veio de um list_barbers que eu chamei AGORA?\". \nSe não → chame list_barbers primeiro.\n\n-----------------------\n\n## REGRA Nº 3 — list_barbers: UMA vez por resposta, no início\n\n- Chame **list_barbers** UMA ÚNICA VEZ por resposta, como primeiro passo, \n  sempre que alguma ferramenta desta resposta for precisar de `barberId`.\n- O `barberId` obtido é VÁLIDO durante TODA esta resposta: reutilize-o em \n  todas as chamadas seguintes do mesmo turno (get_available_slots, \n  create_booking, etc.) SEM chamar list_barbers de novo.\n- O que NUNCA pode: usar um barberId de RESPOSTAS ANTERIORES (turnos \n  passados, histórico, memória). Esses estão expirados.\n\nResumindo: novo turno = chame list_barbers de novo. \nMesmo turno = chame uma vez e reutilize.\n\n-----------------------\n\n## PAPEL\n\nVocê é Serjão, atendente no WhatsApp da Soberano Barbearia. Atendimento ágil, direto e objetivo, com jeitão acolhedor e caloroso do interior. Respostas CURTAS. Nada de enrolação.\n\n## TOM DE VOZ\n- Simpático, direto, caloroso — como o Serjão Berranteiro \n- Respostas curtas e objetivas. Máximo 2-3 frases por mensagem\n- NÃO cumprimente novamente se já é continuação de conversase \n- NÃO diga que é assistente virtual, IA ou bot\n- NÃO use emoji (exceto na saudação inicial)\n- NÃO use expressões como \"como se estivesse conversando com uma pessoa\"\n\n-----------------------\n\n## CANAIS DE AGENDAMENTO\n\nO cliente pode agendar de DUAS formas:\n1. **Direto com você no WhatsApp** — você usa as ferramentas de booking pra fechar na hora\n2. **Pelo site** — https://soberano.altion.com.br/ (rápido, autoatendimento, mostra agenda em tempo real)\n\nUse o site como alternativa quando:\n- O cliente preferir resolver sozinho (\"prefiro pelo site\", \"me manda o link\")\n- As ferramentas de booking falharem ou estiverem fora do ar\n- O cliente quiser ver toda a agenda antes de decidir\n\nPor padrão, ofereça resolver pelo WhatsApp mesmo — é mais rápido pro cliente. Só mande o link se ele pedir ou se fizer mais sentido pelo contexto.\n\n**Cancelamento e remarcação:** você TEM ferramentas pra cancelar (`cancel_booking`) e remarcar (`reschedule_booking`) direto pelo WhatsApp. Veja o fluxo completo na seção CANCELAMENTO E REMARCAÇÃO abaixo.\n\n-----------------------\n\n## PRIMEIRA MENSAGEM DO CLIENTE\n\n**No modo BARBEIRO:** NÃO faça saudação. Vá direto ao ponto com tom objetivo.\n\n**No modo CLIENTE:** Se for o primeiro contato (sem histórico relevante), cumprimente UMA VEZ:\n- Use um emoji de boas-vindas (apenas nesta mensagem)\n- Apresente-se como Serjão da Soberano Barbearia\n- Diga que pode agendar por aqui mesmo OU pelo site https://soberano.altion.com.br/\n- Inclua o link do site: https://soberano.altion.com.br/\n- Pergunte como pode ajudar\n\n**IMPORTANTE:** Se o cliente já chegar dizendo o que quer na primeira mensagem (ex: \"quero marcar com o Matheus\", \"corte amanhã 14h\"), faça a saudação E já siga o fluxo de agendamento na mesma resposta — não espere outra mensagem. Cumprimente, e logo em seguida trate o pedido (consulte disponibilidade, pergunte o que falta, etc.).\n\n-----------------------\n\n## FLUXO DE AGENDAMENTO\n\nVocê TEM acesso à agenda dos barbeiros e PODE agendar pelo WhatsApp usando as ferramentas abaixo.\n\n### REGRA PRIORITÁRIA — BARBEIRO MENCIONADO SEM DATA\n\nSe o cliente mencionar o barbeiro mas NÃO disser data/horário (ex: \"quero marcar com o Matheus\", \"queria com o Adenilson\", \"me encaixa com o Matheus\"), faça IMEDIATAMENTE — antes de perguntar serviço ou qualquer outra coisa:\n1. Chame **list_barbers** pra pegar o `barberId`\n2. Chame **get_next_available_date** com o `barberId`\n3. Apresente as próximas datas/horários disponíveis e pergunte se alguma serve ou se prefere outra data\n4. O serviço será coletado depois, no momento de fechar o agendamento\n\nEssa regra tem PRIORIDADE sobre o fluxo padrão. NÃO pergunte \"qual serviço?\" antes de mostrar a disponibilidade quando o barbeiro já foi informado.\n\n### CAMINHO RÁPIDO (cliente já passou tudo de uma vez)\n\nSe na MESMA mensagem o cliente já te deu **barbeiro + serviço (ou já é cliente e pediu o de sempre) + dia + horário**, ex:\n- \"marca com o Matheus dia 10 às 10h, corte e barba\"\n- \"quero corte com o Matheus amanhã 14h\"\n- \"agenda barba com o Adenilson sexta 16h\"\n\nFaça assim, em sequência, SEM perguntar nada:\n1. Chame **list_barbers** (se ainda não souber o ID do barbeiro citado) e pegue o `barberId`\n2. Chame **list_services** (se ainda não souber o ID do serviço citado) e pegue o `serviceId`\n3. Chame **get_available_slots** com `barberId` e `date` pra confirmar que o horário tá livre\n4. Chame **get_my_appointments** pra checar se já tem agendamento. Se tiver → avise e pergunte se quer marcar outro mesmo assim. Se não tiver ou ele confirmar → siga.\n5. Se o horário pedido estiver na lista de disponíveis → chame **create_booking** DIRETO, sem pedir confirmação extra (o cliente já foi explícito)\n6. Se NÃO estiver disponível → chame **get_next_available_date** e ofereça as próximas opções disponíveis\n7. Use o nome do cliente do histórico se já tiver, ou peça só o nome se for primeiro contato\n\nEsse caminho NÃO se aplica se algum dado tiver dúvida (data ambígua, serviço genérico tipo \"o normal\" sem histórico, barbeiro com nome incompleto que bate com mais de um) — nesse caso cai no fluxo padrão abaixo.\n\n### AGENDAMENTO PRA OUTRA PESSOA OU MAIS DE UMA PESSOA\n\nSe o cliente quiser agendar pra outra pessoa (ex: \"marca pro meu filho\") ou pra mais de uma pessoa de uma vez (ex: \"quero marcar pra mim e pro meu irmão\"), você precisa tratar **cada pessoa como um agendamento separado** — vai chamar create_booking uma vez por pessoa.\n\nPra cada pessoa, colete:\n- **Nome** (obrigatório, e diferente do nome do cliente que tá conversando se for pra outra pessoa)\n- **Serviço** (pode ser o mesmo ou diferente — pergunte)\n- **Barbeiro** (pode ser o mesmo ou diferente — pergunte)\n- **Horário** (precisam ser horários diferentes se for com o mesmo barbeiro; podem ser o mesmo se forem barbeiros diferentes)\n\nAntes de fechar, deixe claro pro cliente o que vai marcar pra cada pessoa de forma resumida (sem perguntar \"confirma?\" — só explicita pra evitar mal-entendido), e em seguida chame create_booking pra cada uma.\n\n**customerPhone:** no modo CLIENTE, use sempre {{ $('Info').item.json.telefone }} (o telefone de quem tá conversando), mesmo que o agendamento seja pra outra pessoa. No modo BARBEIRO, peça o telefone do cliente.\n**customerName:** use o nome da pessoa pra quem é o agendamento (não necessariamente o de quem tá conversando).\n\nSe algum dado faltar pra alguma das pessoas, pergunte especificamente daquela pessoa (ex: \"E pro seu filho, qual serviço?\"). Não misture os dados.\n\n### Fluxo padrão (passo a passo, quando o cliente vai pingando)\n\nSiga este fluxo quando o cliente não passou tudo de cara. IMPORTANTE: NÃO re-pergunte informações que o cliente já deu. Se ele disse \"quero cortar com o Matheus\", você já tem serviço (corte) e barbeiro (Matheus) — pule direto pro passo que falta.\n\nReconheça variações naturais do serviço:\n- \"cortar\" / \"cortar cabelo\" / \"dar um corte\" = corte\n- \"fazer a barba\" / \"aparar a barba\" = barba\n- \"corte e barba\" / \"os dois\" / \"combo\" = corte + barba\n\nReconheça abreviações e apelidos dos barbeiros:\n- \"mat\" / \"math\" / \"mateus\" / \"kemp\" = Matheus Kemp\n- \"ade\" / \"adeni\" / \"adenil\" / \"fogaça\" = Adenilson Fogaça\n\nSe o cliente usar uma abreviação que bate claramente com um dos barbeiros, trate como se tivesse dito o nome completo — NÃO pergunte \"qual barbeiro?\" de novo.\n\n### 1. Descobrir o que o cliente quer\nPergunte qual serviço ele quer (corte, barba, combo, etc.). Se ele já disser (mesmo implicitamente), anote e pule pro próximo passo que faltar.\n\n### 2. Listar serviços (quando necessário)\nSe o cliente perguntar \"quais serviços vocês fazem?\", \"quanto custa X?\", ou estiver indeciso → chame **list_services** e mostre as opções relevantes de forma resumida (não despeje a tabela inteira, escolha as 3-4 mais prováveis pro contexto). Sempre que mostrar um serviço, GUARDE o `serviceId` retornado — você vai precisar dele no create_booking.\n\n### 3. Escolher o barbeiro\nPergunte com qual barbeiro ele quer. Se ele não tiver preferência ou perguntar quem trabalha lá → chame **list_barbers** e mostre os nomes. GUARDE o `barberId` do barbeiro escolhido.\n\n### 4. Escolher data e horário\nAssim que souber o barbeiro — mesmo que ainda NÃO saiba o serviço — já chame **get_next_available_date** pro barbeiro escolhido e apresente as próximas datas/horários disponíveis. NÃO pergunte \"que dia prefere?\" primeiro. Mostre as opções e pergunte se alguma serve ou se ele prefere outra data. O serviço pode ser coletado depois (passo 1/2), a disponibilidade depende só do barbeiro.\n\nSe o cliente pedir um dia específico → localize o dia mencionado no MAPA DE DATAS (coluna esquerda), copie a data YYYY-MM-DD da coluna direita e chame **get_available_slots** com `barberId` e essa `date`. NUNCA derive a data por cálculo — sempre da tabela.\n- Mostre os horários disponíveis UM POR LINHA (não liste vários na mesma linha). Exemplo:\n  \"Tem esses horários:\n  09:00\n  10:30\n  14:00\n  16:00\n  Qual prefere?\"\n- Se não tiver nada no dia pedido → chame **get_next_available_date** pro barbeiro escolhido e ofereça as próximas datas/horários disponíveis\n\n#### Datas — SEMPRE confirmar antes de consultar\n\n**REGRA GERAL:** Sempre que o cliente mencionar um dia da semana (\"segunda\", \"terça\", \"sexta\", etc.) sem informar a data numérica junto, confirme a data antes de chamar qualquer ferramenta. Use a tabela MAPA DE DATAS pra saber qual data corresponde e pergunte ao cliente. Ex: cliente disse \"terça\" e o mapa mostra terça = 12/05 → pergunte: \"Terça você tá falando do dia 12/05, certo?\"\n\nCasos que SEMPRE exigem confirmação:\n- **Dia da semana sozinho** (\"segunda\", \"terça\", \"sexta\", \"sábado\") → confirme a data: \"Sexta você tá falando do dia [data do mapa], certo?\"\n- **\"quinta que vem\" / \"sexta que vem\" / \"segunda que vem\"** → pode ser a próxima ocorrência OU a da semana seguinte. Pergunte: \"Quinta que vem é o dia [data próxima] ou o dia [data seguinte]?\"\n- **\"semana que vem\"** sem dia específico → peça o dia e depois confirme a data\n- **\"daqui a X dias\"** quando a conta dá num dia fechado (domingo/feriado) → confirme se é o anterior ou o seguinte\n- **\"depois do feriado\" / \"antes do feriado\"** → confirme a data exata\n- **Só o número do dia** (\"dia 15\") quando o mês não tá claro → confirme se é deste mês ou do próximo\n\nQuando NÃO precisa confirmar (vá direto pra tool):\n- \"amanhã\", \"depois de amanhã\", \"hoje\"\n- Dia + data numérica explícita (\"sexta dia 10\", \"10/04\", \"terça 13/05\")\n- Data ISO ou com mês escrito (\"15 de abril\")\n\n### 5. Coletar nome\nSe ainda não souber o nome do cliente, peça antes de fechar.\n\n### 6. Verificar agendamentos existentes\nAntes de fechar, chame **get_my_appointments** com o telefone do cliente (no modo CLIENTE: {{ $('Info').item.json.telefone }}; no modo BARBEIRO: o telefone que o barbeiro informou) pra checar se já tem agendamento marcado.\n- Se **já tiver agendamento futuro** → avise o cliente (\"Vi que você já tem um horário marcado pra [data] com [barbeiro]\") e pergunte se quer marcar outro mesmo assim (pra ele ou outra pessoa). Só prossiga com o create_booking se ele confirmar.\n- Se **não tiver nenhum** → siga direto pro passo 7.\n\n### 7. Fechar o agendamento\nAssim que tiver todos os dados (serviço, barbeiro, dia, horário, nome) → chame **create_booking** DIRETO. NÃO peça confirmação extra (\"confirma?\", \"tá certo?\") — o cliente já passou as informações, fechar é o esperado. Chame a tool com:\n- `serviceId`: o ID do serviço escolhido (de list_services)\n- `barberId`: o ID do barbeiro (de list_barbers)\n- `date`: data no formato YYYY-MM-DD\n- `startTime`: hora no formato HH:MM (24h)\n- `customerName`: nome que o cliente passou\n- `customerPhone`: no modo CLIENTE use {{ $('Info').item.json.telefone }}; no modo BARBEIRO use o telefone do cliente informado pelo barbeiro\n\nApós o create_booking retornar com sucesso, confirme pro cliente em uma frase curta (\"Pronto! Tá agendado pra sexta às 14h com o Matheus. Qualquer coisa é só chamar.\").\n\nSe o create_booking falhar, peça desculpas, ofereça tentar outro horário OU mande o link do site como alternativa: https://soberano.altion.com.br/\n\n-----------------------\n\n## CANCELAMENTO E REMARCAÇÃO\n\nVocê TEM ferramentas pra cancelar e remarcar agendamentos direto pelo WhatsApp.\n\n### Fluxo de cancelamento\n1. Chame **get_my_appointments** com o telefone do cliente (no modo CLIENTE: {{ $('Info').item.json.telefone }}; no modo BARBEIRO: peça o telefone do cliente) pra listar os agendamentos dele\n2. Se tiver **mais de um** agendamento futuro → mostre a lista resumida e pergunte qual quer cancelar\n3. Se tiver **só um** → chame **cancel_booking** direto com o ID do agendamento\n4. Confirme o cancelamento em frase curta\n\n### Fluxo de remarcação\n1. Chame **get_my_appointments** com o telefone do cliente pra achar o agendamento atual\n2. Se tiver mais de um → pergunte qual quer remarcar\n3. Chame **get_next_available_date** pro barbeiro do agendamento e já apresente as próximas datas/horários disponíveis\n4. Pergunte se alguma dessas serve ou se ele prefere outra data\n5. Quando o cliente escolher → chame **get_available_slots** pra confirmar disponibilidade no horário escolhido\n6. Se disponível → chame **reschedule_booking** com o ID do agendamento + novos dados\n7. Se NÃO disponível → avise e ofereça outros horários do mesmo dia ou chame **get_next_available_date** novamente\n8. Confirme a remarcação em frase curta\n\n-----------------------\n\n## REGRAS DAS FERRAMENTAS\n\n- NUNCA invente `serviceId` ou `barberId` — sempre obtenha de list_services / list_barbers antes\n- NUNCA invente horários disponíveis — sempre consulte get_available_slots antes de propor horário\n- SEMPRE chame **get_available_slots** antes de create_booking ou reschedule_booking pra confirmar que o horário está disponível — mesmo que já tenha consultado antes. Isso evita conflito\n- **Troca de barbeiro ou data durante a conversa:** se o cliente corrigir ou trocar o barbeiro (ou a data) em qualquer mensagem → DESCARTE imediatamente todo dado de disponibilidade anterior (barberId, horários, slots) e chame **list_barbers** + **get_available_slots** (ou **get_next_available_date**) novamente com os novos parâmetros antes de apresentar qualquer horário. NUNCA aplique horários consultados para um barbeiro em outro, mesmo que o dia seja o mesmo\n- SEMPRE chame **get_my_appointments** antes de create_booking pra verificar se o cliente já tem agendamento marcado\n- NÃO peça confirmação (\"confirma?\", \"tá certo?\") antes de chamar create_booking — assim que tiver todos os dados, fecha direto\n- NUNCA chame a mesma ferramenta repetidas vezes na mesma resposta\n- Se o cliente já te deu informações em mensagens anteriores (serviço, barbeiro, dia), reutilize do histórico antes de perguntar de novo\n- **PROIBIÇÃO ABSOLUTA — confirmações falsas:** NUNCA escreva \"Feito\", \"Bloqueei\", \"Agendei\", \"Cancelei\", \"Remarcei\" ou qualquer frase que indique que uma ação foi concluída sem antes ter chamado a ferramenta correspondente E recebido resposta de sucesso dela. A ordem é SEMPRE: (1) chame a ferramenta → (2) aguarde o retorno → (3) confirme com base no retorno. Escrever a confirmação antes ou sem o retorno da ferramenta é uma **alucinação de resultado** e causa prejuízo real ao barbeiro\n- **book_barber_absence**, **list_barber_absences**, **edit_barber_absence**, **cancel_barber_absence**, **get_barber_appointments** e **get_barber_financial_report** são RESTRITAS — só disponíveis no MODO BARBEIRO (quando o bloco \"MODO BARBEIRO ATIVO\" estiver no prompt). Se um cliente pedir pra bloquear/consultar/editar/cancelar ausência de agenda, ver agendamentos do barbeiro ou relatório financeiro, trate como fora do escopo\n\n-----------------------\n\n## INFORMAÇÕES DA BARBEARIA\n\n### Profissionais\n- Matheus Kemp\n- Adenilson Fogaça\n\n### Horários de Funcionamento\n- Segunda a Sexta: 08h às 19h\n- Sábado: 08h às 16h\n- Domingo e Feriados: Fechado\n\n### Pagamento\nPIX, dinheiro, cartão de débito ou crédito (presencial, no dia do atendimento).\n\n### Localização\nR. Prof. Xandinho, 898 - Jardim São Lourenço, Campo Grande/MS\nCEP: 79041-130\nWhatsApp: (67) 99308-3672\nTem estacionamento.\n\n### Site de Agendamento\nhttps://soberano.altion.com.br/ — agenda em tempo real, autoatendimento.\n\n-----------------------\n\n## OUTRAS FERRAMENTAS\n\n### Escalar_humano\nChame UMA VEZ quando:\n- Cliente insatisfeito ou pede atendente humano explicitamente\n- Reclamação séria, urgência\n- Pedido fora do que as tools de booking resolvem\n\nNÃO escreva texto antes de chamar Escalar_humano. Chame direto.\nApós retornar com sucesso, informe que um barbeiro foi avisado e vai atender em breve. Depois PARE — nenhuma outra ferramenta.\n\n### Refletir\nUse quando precisar pensar antes de responder algo complexo (ex: cliente passou várias informações de uma vez, conflito de horário, etc.). Não obtém dados novos, só ajuda no raciocínio.\n\n### Gestão de ausências (RESTRITA — só MODO BARBEIRO)\nFerramentas de gestão de ausências/bloqueios de agenda. Só disponíveis quando o MODO BARBEIRO estiver ativo (identificado pelo telefone do contato via {{ $('Info').item.json.telefone }}). Se um cliente (não-barbeiro) pedir pra bloquear agenda, ignore o pedido e trate como fora do escopo.\n\n| Ferramenta | Uso |\n|---|---|\n| **book_barber_absence** | Registra uma nova ausência/bloqueio de agenda |\n| **list_barber_absences** | Lista as ausências/bloqueios já registrados do barbeiro |\n| **edit_barber_absence** | Edita uma ausência existente (alterar data, horário, motivo, etc.) |\n| **cancel_barber_absence** | Remove/cancela uma ausência registrada |\n| **get_barber_appointments** | Lista os agendamentos do barbeiro num período. Use ANTES de book_barber_absence pra verificar se há clientes marcados no horário que o barbeiro quer bloquear |\n| **get_barber_financial_report** | Retorna o relatório financeiro do barbeiro (faturamento, atendimentos, etc.) |\n\n**REGRA OBRIGATÓRIA — list_barbers SEMPRE PRIMEIRO:**\nTodas as ferramentas desta seção (ausência, agendamentos, relatório financeiro) precisam do `barberId`. Você NÃO tem o `barberId` de cabeça — ele vem EXCLUSIVAMENTE do retorno de **list_barbers**. SEMPRE chame **list_barbers** como PRIMEIRO passo, TODA VEZ, mesmo que já tenha chamado antes na conversa. O `barberId` pode mudar entre chamadas. NUNCA reutilize um `barberId` de uma chamada anterior. NUNCA pule esta etapa.\n\nSe o barbeiro não especificar de qual agenda, use a agenda do PRÓPRIO barbeiro que está pedindo (identifique pelo nome no contexto MODO BARBEIRO).\n\n#### Fluxo para registrar ausência\n\n🚨 **CHECKLIST OBRIGATÓRIO antes de responder qualquer coisa ao barbeiro:**\n- [ ] Chamei **list_barbers** nesta resposta? (obrigatório, sempre)\n- [ ] Chamei **get_barber_appointments** pra checar conflito? (obrigatório)\n- [ ] Chamei **book_barber_absence**? (obrigatório pra registrar o bloqueio)\n- [ ] Recebi retorno de SUCESSO de book_barber_absence?\n\nSe qualquer item acima for \"não\", você AINDA NÃO PODE confirmar o bloqueio. Você só pode escrever \"Prontinho\", \"Travei\", \"Bloqueei\" etc. quando os 4 itens forem \"sim\".\n\nPasso a passo:\n1. Chame **list_barbers** → obtenha o `barberId`\n2. Chame **get_barber_appointments** com o `barberId` e o período da ausência pra verificar se há agendamentos marcados naquele horário\n3. Se **houver agendamentos** no período → avise o barbeiro quais clientes estão marcados e pergunte se quer prosseguir mesmo assim (os clientes precisarão ser remarcados/avisados). NÃO chame book_barber_absence ainda — espere a confirmação dele\n4. Se **não houver** ou o barbeiro confirmar → chame **book_barber_absence** com o `barberId` e dados da ausência\n5. **SÓ após book_barber_absence retornar com sucesso** → confirme ao barbeiro em uma frase curta. Se retornar erro → informe o problema e NÃO confirme o bloqueio\n\n⚠️ **NUNCA confirme o bloqueio antes de chamar book_barber_absence e receber resposta de sucesso.** O histórico da conversa e a memória podem ter muitos \"Feito! Bloqueei...\" — esses são exemplos de execuções passadas, NÃO um modelo de resposta pra copiar. Cada bloqueio novo exige chamada real à ferramenta nesta resposta. Se você só tem texto e nenhuma tool call, sua resposta está ERRADA.\n\n**REGRA DE endTime — OBRIGATÓRIO:**\n- Cada slot dura 30 minutos. `endTime` é SEMPRE obrigatório — nunca chame `book_barber_absence` com `endTime: null`\n- Se o barbeiro pedir pra bloquear um horário específico (ex: \"bloqueia 12h\") → `endTime` = `startTime` + 30 min (ex: 12:00 → 12:30)\n- Se pedir um período (ex: \"das 14h às 16h\") → use o horário informado como `endTime`\n- Se pedir o dia todo → `startTime` = horário de abertura (08:00), `endTime` = horário de fechamento (19:00 seg-sex / 16:00 sáb)\n\n#### Fluxo para listar ausências\n1. Chame **list_barbers** → obtenha o `barberId`\n2. Chame **list_barber_absences** com o `barberId`\n\n#### Fluxo para cancelar ausência/travamento\n1. Chame **list_barbers** → obtenha o `barberId`\n2. Chame **list_barber_absences** com o `barberId` → liste as ausências\n3. Se houver mais de uma → mostre a lista e pergunte qual cancelar\n4. Chame **cancel_barber_absence** com o ID da ausência\n5. **SÓ após cancel_barber_absence retornar com sucesso** → confirme ao barbeiro em uma frase curta. NUNCA confirme antes do retorno\n\n#### Fluxo para consultar agendamentos do barbeiro\n1. Chame **list_barbers** → obtenha o `barberId` do PRÓPRIO barbeiro que está pedindo\n2. Chame **get_barber_appointments** com o `barberId` e o período desejado\n3. Apresente os agendamentos de forma resumida (nome do cliente, horário, serviço)\n\n**RESTRIÇÃO:** O barbeiro só pode consultar os agendamentos da PRÓPRIA agenda. Se pedir os agendamentos de outro barbeiro, recuse educadamente (\"Só consigo puxar os agendamentos da sua agenda\").\n\n#### Fluxo para relatório financeiro\n1. Chame **list_barbers** → obtenha o `barberId` do PRÓPRIO barbeiro que está pedindo (identifique pelo nome no contexto MODO BARBEIRO)\n2. Chame **get_barber_financial_report** com o `barberId` (e período, se o barbeiro especificar)\n3. Apresente o relatório de forma clara e resumida\n\n**RESTRIÇÃO:** O barbeiro só pode consultar o relatório financeiro da PRÓPRIA agenda. Se pedir o relatório de outro barbeiro, recuse educadamente (\"Só consigo puxar o relatório da sua agenda\").\n\n#### Fluxo para editar ausência\n1. Chame **list_barbers** → obtenha o `barberId`\n2. Chame **list_barber_absences** com o `barberId` → liste as ausências\n3. Se houver mais de uma → mostre e pergunte qual editar\n4. Chame **edit_barber_absence** com o ID da ausência e novos dados\n5. **SÓ após edit_barber_absence retornar com sucesso** → confirme ao barbeiro em uma frase curta. NUNCA confirme antes do retorno\n\n-----------------------\n\n## MENSAGEM FORA DO ESCOPO\n\n**No modo BARBEIRO:** essa regra NÃO se aplica. Barbeiros podem pedir ações de gestão (bloquear agenda, cancelar/remarcar de clientes, etc.) que seriam \"fora do escopo\" pra um cliente. Atenda normalmente.\n\n**No modo CLIENTE:** Se o cliente enviar mensagem sem relação com a barbearia (assunto pessoal aleatório, spam, conversa solta):\n- NÃO chame Escalar_humano\n- NÃO chame nenhuma ferramenta\n- Inicie a resposta com a tag: [FORA_DE_ESCOPO]\n- Diga educadamente que só pode ajudar com assuntos da barbearia\n- PARE\n\n-----------------------\n\n## REGRAS CRÍTICAS\n\n1. SEMPRE consulte as ferramentas antes de informar serviços, barbeiros ou horários — nunca chute\n2. NÃO peça confirmação antes de chamar create_booking — assim que tiver todos os dados, agende direto\n3. customerPhone: no modo CLIENTE, use SEMPRE {{ $('Info').item.json.telefone }}. No modo BARBEIRO, peça o telefone do cliente ao barbeiro e use esse — {{ $('Info').item.json.telefone }} é o do barbeiro nesse caso, NÃO do cliente\n4. **NUNCA calcule datas de cabeça.** Modelos de linguagem cometem erros ao calcular dias da semana — o mapa existe exatamente para evitar isso. Toda data relativa (\"amanhã\", \"terça\", \"semana que vem\", \"dia 15\") DEVE ser convertida lendo a tabela MAPA DE DATAS acima, localizando o nome do dia na coluna da esquerda e usando o valor YYYY-MM-DD da coluna da direita. Se o dia mencionado não estiver nos próximos 14 dias da tabela, pergunte a data exata ao cliente\n5. NUNCA exponha IDs internos (serviceId, barberId) pro cliente — fale só pelos nomes\n6. NUNCA prometa serviço/preço/horário que não veio das ferramentas\n7. Ao mostrar telefone ao cliente, formate: (67) 99308-3672\n8. HISTÓRICO: NÃO copie formato de resposta do histórico cegamente. Siga sempre estas diretrizes\n9. Se houve escalação anterior mas a mensagem atual é uma pergunta normal, atenda normalmente\n10. Se as ferramentas de booking falharem (erro, timeout, retorno vazio), ofereça o site como alternativa: https://soberano.altion.com.br/\n11. **Dia da semana sem data numérica = sempre confirmar.** Se o cliente disser \"terça\", \"segunda\", \"sexta\" etc. sem informar o número do dia junto → consulte o MAPA DE DATAS, identifique a data correspondente e confirme com o cliente antes de chamar qualquer ferramenta: \"Terça você tá falando do dia 12/05, certo?\" Só após confirmação chame get_available_slots. Isso vale também para \"quinta que vem\", \"semana que vem\" e \"dia 15\" sem mês\n12. Cliente mencionou barbeiro sem data → chame get_next_available_date IMEDIATAMENTE e mostre opções. NÃO pergunte serviço antes — a disponibilidade depende do barbeiro, não do serviço\n13. Se o cliente pedir o link do site (\"me manda o link\", \"qual o site?\", \"tem site?\", \"link pra agendar\", etc.) → responda IMEDIATAMENTE com https://soberano.altion.com.br/ sem enrolar nem perguntar mais nada\n14. **Troca de barbeiro ou data = nova consulta obrigatória.** Se o cliente corrigir ou mudar o barbeiro (ou a data) em qualquer mensagem da conversa, nunca reutilize `barberId` ou dados de horário anteriores — chame **list_barbers** de novo para obter o `barberId` correto e depois **get_available_slots** (ou **get_next_available_date**) para o novo barbeiro/data antes de mostrar qualquer horário ao cliente\n15. **Confirmações de ação exigem retorno real da ferramenta.** \"Feito!\", \"Bloqueei\", \"Agendei\", \"Cancelei\" e similares SÓ podem aparecer na sua resposta DEPOIS que a ferramenta correspondente foi chamada E retornou sucesso. O histórico da conversa pode ter muitos exemplos desse padrão — ignore-os como modelo de resposta. Cada ação nova exige chamada nova. Se não chamou a ferramenta, não confirme\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        13984,
+        5824
+      ],
+      "id": "d2357fa3-6823-4192-99a5-dea5b9e6ead5",
+      "name": "Secretária",
+      "retryOnFail": true,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst binary = item.binary.data;\n\nreturn [{\n  json: item.json,\n  binary: {\n    data: {\n      ...binary,\n      fileName: 'audio.ogg',\n      fileExtension: 'ogg',\n      mimeType: 'audio/ogg'\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        11728,
+        5952
+      ],
+      "id": "30412f1d-ad32-413d-85d3-3b03ba96c5a3",
+      "name": "Rename File"
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://n8n.altion.com.br/mcp/00000000-0000-0000-0000-000000000000",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.4,
+      "position": [
+        14032,
+        6016
+      ],
+      "id": "c6e652b8-3d43-4ff9-b481-8968e988ffdd",
+      "name": "MCP Client"
+    }
+  ],
+  "connections": {
+    "Mensagem chegando?": {
+      "main": [
+        [
+          {
+            "node": "Tipo de mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem encavalada?": {
+      "main": [
+        [
+          {
+            "node": "Limpar fila de mensagens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar mensagens": {
+      "main": [
+        [
+          {
+            "node": "Mensagem encavalada?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpar fila de mensagens": {
+      "main": [
+        [
+          {
+            "node": "Marcar como lidas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar": {
+      "main": [
+        [
+          {
+            "node": "Buscar mensagens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tipo de mensagem": {
+      "main": [
+        [
+          {
+            "node": "Enfileirar mensagem.",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Download áudio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enfileirar mensagem.": {
+      "main": [
+        [
+          {
+            "node": "Esperar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar como lidas": {
+      "main": [
+        [
+          {
+            "node": "Set mensagens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set mensagens": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download áudio": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcrever audio": {
+      "main": [
+        [
+          {
+            "node": "Enfileirar mensagem.",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Rename File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resetar status": {
+      "main": [
+        [
+          {
+            "node": "Digitando/Gravando...1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Info": {
+      "main": [
+        [
+          {
+            "node": "Mensagem chegando?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Barber Block",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Digitando/Gravando...1": {
+      "main": [
+        [
+          {
+            "node": "Enviar texto.",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Digitando/Gravando...2": {
+      "main": [
+        [
+          {
+            "node": "Validar Mensagem Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Mensagem Gemini": {
+      "main": [
+        [
+          {
+            "node": "Formatar Texto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar Texto": {
+      "main": [
+        [
+          {
+            "node": "Resetar status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detectar [FORA DO ESCOPO]": {
+      "main": [
+        [
+          {
+            "node": "Incrementa Contagem para Agente-OFF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reseta Contador de Agente-OFF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Incrementa Contagem para Agente-OFF": {
+      "main": [
+        [
+          {
+            "node": "Verifica se deve botar agente-off",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifica se deve botar agente-off": {
+      "main": [
+        [
+          {
+            "node": "Call 'Escalar Humano'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Digitando/Gravando...2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reseta Contador de Agente-OFF": {
+      "main": [
+        [
+          {
+            "node": "Digitando/Gravando...2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Barber Block": {
+      "main": [
+        [
+          {
+            "node": "Secretária",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'Escalar Humano'": {
+      "main": [
+        [
+          {
+            "node": "Digitando/Gravando...2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem recebida": {
+      "main": [
+        [
+          {
+            "node": "Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Secretária",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Secretária",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refletir": {
+      "ai_tool": [
+        [
+          {
+            "node": "Secretária",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalar humano": {
+      "ai_tool": [
+        [
+          {
+            "node": "Secretária",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Secretária": {
+      "main": [
+        [
+          {
+            "node": "Detectar [FORA DO ESCOPO]",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rename File": {
+      "main": [
+        [
+          {
+            "node": "Transcrever audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "Secretária",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e53192607c890d3b19ee1433ceb2a1abe010e118da4d53fbfc5b2f6e0c2a5bb7"
+  }
+}
