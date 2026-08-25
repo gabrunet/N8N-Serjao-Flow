@@ -1,72 +1,76 @@
 # N8N Serjão Flow
 
-Workflow do n8n do **Serjão**, atendente WhatsApp da Soberano Barbearia
-(Chatwoot + agente de IA com agendamento).
+n8n workflow for **Serjão**, the WhatsApp attendant of Soberano Barbearia
+(Chatwoot + an AI booking agent).
 
-## Arquivos
+Node names are kept in Portuguese so they match what you see on the n8n
+canvas.
 
-| Arquivo | Descrição |
+## Files
+
+| File | Description |
 |---|---|
-| `workflows/serjao.json` | Workflow principal, pronto para importar no n8n |
+| `workflows/serjao.json` | Main workflow, ready to import into n8n |
 
-## Como importar
+## Importing
 
-No n8n: **Workflows → ⋯ → Import from File** e selecione
-`workflows/serjao.json`. Também é possível copiar o conteúdo do arquivo e
-colar direto no canvas.
+In n8n: **Workflows → ⋯ → Import from File** and pick
+`workflows/serjao.json`. You can also copy the file contents and paste them
+straight onto the canvas.
 
-## Visão geral do fluxo
+## Flow overview
 
-1. **Mensagem recebida** — webhook que recebe os eventos do Chatwoot.
-2. **Info** — normaliza o payload (telefone, mensagem, etiquetas, tipo,
+1. **Mensagem recebida** — webhook receiving Chatwoot events.
+2. **Info** — normalizes the payload (phone, message, labels, type,
    `isBarber`, etc.).
-3. **Mensagem chegando?** — filtra apenas mensagens `incoming` sem as
-   etiquetas `agente-off` e `teste`.
-4. **Tipo de mensagem** — separa texto de áudio; o áudio passa por
-   download → extract → convert → rename → transcrição (Whisper).
-5. **Fila de mensagens encavaladas** — enfileira no Postgres, espera ~16s,
-   busca a fila e descarta execuções encavaladas antes de limpar a fila.
-6. **Marcar como lidas / reação automática** — atualiza o `last_seen` e
-   envia uma reação conforme o conteúdo da mensagem.
-7. **Barber Block → Secretária** — monta o bloco de modo barbeiro e chama o
-   agente (Gemini + memória Postgres + tools via MCP Client, Refletir e
+3. **Mensagem chegando?** — keeps only `incoming` messages that don't carry
+   the `agente-off` or `teste` labels.
+4. **Tipo de mensagem** — splits text from audio; audio goes through
+   download → extract → convert → rename → transcription (Whisper).
+5. **Message queue (overlapping messages)** — enqueues into Postgres, waits
+   ~16s, reads the queue back and drops overlapping executions before
+   clearing it.
+6. **Marcar como lidas / auto reaction** — updates `last_seen` and sends a
+   reaction based on the message content.
+7. **Barber Block → Secretária** — builds the barber-mode block and calls the
+   agent (Gemini + Postgres memory + tools via MCP Client, Refletir and
    Escalar humano).
-8. **Tratamentos pós-agente** — detecta `[FORA_DE_ESCOPO]`, controla o
-   contador que aplica `agente-off` após 3 ocorrências e escala para humano.
-9. **Envio da resposta** — valida a saída, formata o texto para WhatsApp e
-   envia pelo Chatwoot, alternando o status de digitando/gravando.
+8. **Post-agent handling** — detects `[FORA_DE_ESCOPO]`, drives the counter
+   that applies `agente-off` after 3 occurrences, and escalates to a human.
+9. **Reply delivery** — validates the output, formats the text for WhatsApp
+   and sends it through Chatwoot, toggling the typing/recording status.
 
-## Dependências
+## Dependencies
 
-- **Credenciais n8n:** Chatwoot API, Postgres (Supabase), OpenAI (transcrição)
-  e Google Gemini (PaLM).
-- **Tabelas Postgres:** `n8n_fila_mensagens`, `n8n_historico_mensagens`,
+- **n8n credentials:** Chatwoot API, Postgres (Supabase), OpenAI
+  (transcription) and Google Gemini (PaLM).
+- **Postgres tables:** `n8n_fila_mensagens`, `n8n_historico_mensagens`,
   `n8n_off_topic_counter`.
-- **Sub-workflows:** `Escalar Humano` (produção) e `Escalar Humano DEV`
-  (tool do agente).
-- **MCP Client:** expõe as tools de booking (`list_barbers`, `list_services`,
+- **Sub-workflows:** `Escalar Humano` (production) and `Escalar Humano DEV`
+  (agent tool).
+- **MCP Client:** exposes the booking tools (`list_barbers`, `list_services`,
   `get_available_slots`, `create_booking`, `cancel_booking`,
-  `reschedule_booking`, gestão de ausências, etc.).
+  `reschedule_booking`, absence management, etc.).
 
-## Valores mascarados
+## Masked values
 
-Este repositório é público, então os identificadores que funcionam como token
-de acesso foram substituídos por `00000000-0000-0000-0000-000000000000`.
-Preencha com os valores reais do seu ambiente após importar:
+This repository is public, so the identifiers that act as access tokens were
+replaced with `00000000-0000-0000-0000-000000000000`. Fill them in with your
+own environment's values after importing:
 
-| Nó | Campo | Placeholder |
+| Node | Field | Placeholder |
 |---|---|---|
-| **Mensagem recebida** | `path` / `webhookId` | UUID zerado — define a URL do webhook que o Chatwoot chama |
-| **MCP Client** | `endpointUrl` | UUID zerado no final da URL — token do servidor MCP com as tools de booking |
+| **Mensagem recebida** | `path` / `webhookId` | Zeroed UUID — defines the webhook URL Chatwoot calls |
+| **MCP Client** | `endpointUrl` | Zeroed UUID at the end of the URL — token for the MCP server holding the booking tools |
 
-Não comite os valores reais de volta enquanto o repositório for público.
+Don't commit the real values back while the repository is public.
 
-## Ajustes após importar
+## Post-import checklist
 
-- Preencher os dois valores mascarados da tabela acima.
-- Revincular as credenciais aos nós (os IDs exportados são do ambiente de
-  origem).
-- Preencher `telegram_chat_id` no nó **Info** (está como placeholder).
-- Conferir o aviso do sticky note: os e-mails das agendas estão alterados no
-  ambiente de desenvolvimento — revisar antes de subir para produção.
-- Ao testar, reduzir o tempo do nó **Esperar** (padrão 16s).
+- Fill in the two masked values from the table above.
+- Relink the credentials on each node (the exported IDs belong to the source
+  environment).
+- Set `telegram_chat_id` on the **Info** node (currently a placeholder).
+- Mind the sticky note warning: the calendar e-mails are altered in the
+  development environment — review them before promoting to production.
+- While testing, lower the **Esperar** node's wait time (defaults to 16s).
